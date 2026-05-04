@@ -137,10 +137,10 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo"
 body.view-mode .toolbar,
 body.view-mode .add-track-btn,
 body.view-mode .future-section{display:none!important}
-body.view-mode .stock-card{cursor:default}
-body.view-mode .stock-card:hover{border-color:#E5E3DA}
-body.view-mode .buy-card{cursor:default}
-body.view-mode .buy-card:hover{border-color:#E5E3DA}
+body.view-mode input:disabled,
+body.view-mode textarea:disabled,
+body.view-mode select:disabled{background:#F5F4EE;color:#555550;opacity:1;cursor:default}
+body.view-mode .form-section label::after{content:" (읽기 전용)";font-size:10px;color:#888884;font-weight:normal}
 .ratio-badge{font-size:9px;padding:2px 6px;border-radius:3px;font-weight:500}
 .ratio-badge.good{background:#E1F5EE;color:#0F6E56}
 .ratio-badge.mid{background:#FAEEDA;color:#854F0B}
@@ -806,9 +806,22 @@ const VIEW_ONLY=location.pathname==='/view'||location.hash==='#view'||new URLSea
 if(VIEW_ONLY){
   document.body.classList.add('view-mode');
   const vb=document.getElementById('view-badge');if(vb)vb.style.display='inline-block';
-  ['openModal','openTrackingModal','openAddTrackingModal','openAddClaudeSoloModal'].forEach(function(fn){
+  ['openAddTrackingModal','openAddClaudeSoloModal'].forEach(function(fn){
     if(window[fn])window[fn]=function(){};
   });
+  const mo=document.getElementById('modal-overlay');
+  if(mo){
+    new MutationObserver(function(){
+      if(mo.classList.contains('active')){
+        mo.querySelectorAll('input,textarea,select').forEach(function(el){el.disabled=true;el.readOnly=true});
+        mo.querySelectorAll('button').forEach(function(btn){
+          const txt=(btn.textContent||'').trim();
+          if(txt==='저장'||txt==='추가'||txt==='제거'||txt.indexOf('삭제')>=0)btn.style.display='none';
+        });
+        mo.querySelectorAll('.dec-btn').forEach(function(b){b.style.pointerEvents='none';b.style.opacity='0.6'});
+      }
+    }).observe(mo,{attributes:true,attributeFilter:['class']});
+  }
 }
 renderAll();
 setTimeout(refreshAllPrices,1500);
