@@ -816,9 +816,12 @@ if(VIEW_ONLY){
         mo.querySelectorAll('input,textarea,select').forEach(function(el){el.disabled=true;el.readOnly=true});
         mo.querySelectorAll('button').forEach(function(btn){
           const txt=(btn.textContent||'').trim();
-          if(txt==='저장'||txt==='추가'||txt==='제거'||txt.indexOf('삭제')>=0)btn.style.display='none';
+          if(btn.classList.contains('modal-close'))return;
+          if(txt==='닫기'||txt==='취소')return;
+          if(/저장|추가|제거|삭제|×/.test(txt)){btn.style.display='none';return}
+          btn.style.pointerEvents='none';btn.style.opacity='0.5';
         });
-        mo.querySelectorAll('.dec-btn').forEach(function(b){b.style.pointerEvents='none';b.style.opacity='0.6'});
+        mo.querySelectorAll('.dec-btn').forEach(function(b){b.style.pointerEvents='none';b.style.opacity='0.5'});
       }
     }).observe(mo,{attributes:true,attributeFilter:['class']});
   }
