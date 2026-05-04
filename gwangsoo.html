@@ -133,6 +133,14 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo"
 .claude-solo-section .buy-card{border-left:3px solid #B8541F}
 .buy-card.claude-solo .buy-card-row{padding-bottom:4px;border-bottom:0.5px dashed #E8A87C;margin-bottom:6px}
 .empty-claude-solo{padding:18px;text-align:center;font-size:12px;color:#888884;font-style:italic;border:1px dashed #E5E3DA;border-radius:8px}
+.view-badge{display:inline-block;font-size:11px;padding:3px 8px;background:#EEF1F5;color:#5B6573;border-radius:3px;margin-left:8px;font-weight:500;letter-spacing:0.3px}
+body.view-mode .toolbar,
+body.view-mode .add-track-btn,
+body.view-mode .future-section{display:none!important}
+body.view-mode .stock-card{cursor:default}
+body.view-mode .stock-card:hover{border-color:#E5E3DA}
+body.view-mode .buy-card{cursor:default}
+body.view-mode .buy-card:hover{border-color:#E5E3DA}
 .ratio-badge{font-size:9px;padding:2px 6px;border-radius:3px;font-weight:500}
 .ratio-badge.good{background:#E1F5EE;color:#0F6E56}
 .ratio-badge.mid{background:#FAEEDA;color:#854F0B}
@@ -149,7 +157,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo"
 <body>
 <div class="container">
   <div class="header">
-    <h1>광수네 튜터링 대시보드</h1>
+    <h1>광수네 튜터링 대시보드<span class="view-badge" id="view-badge" style="display:none">읽기 전용</span></h1>
     <div class="meta">1회차 · 26.05.04 · 1단계 (요약+가이드)</div>
   </div>
   <div class="notice-box">
@@ -794,6 +802,14 @@ function removeTracking(idx){
   state.tracking.stocks.splice(idx,1);saveData();closeModalTracking();
 }
 
+const VIEW_ONLY=location.pathname==='/view'||location.hash==='#view'||new URLSearchParams(location.search).get('view')==='1';
+if(VIEW_ONLY){
+  document.body.classList.add('view-mode');
+  const vb=document.getElementById('view-badge');if(vb)vb.style.display='inline-block';
+  ['openModal','openTrackingModal','openAddTrackingModal','openAddClaudeSoloModal'].forEach(function(fn){
+    if(window[fn])window[fn]=function(){};
+  });
+}
 renderAll();
 setTimeout(refreshAllPrices,1500);
 </script>

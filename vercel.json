@@ -1,5 +1,6 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/gwangsoo.html" }
+    { "source": "/", "destination": "/gwangsoo.html" },
+    { "source": "/view", "destination": "/gwangsoo.html" }
   ]
 }
