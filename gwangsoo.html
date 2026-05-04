@@ -50,6 +50,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo"
 .badge-empty{background:#F0EFE9;color:#888884}
 .badge-priority{background:#F0EFE9;color:#5A5A55}
 .badge-saved{background:#E1F5EE;color:#0F6E56;font-size:10px;padding:2px 7px;border-radius:3px;margin-left:8px}
+.badge-claude1{background:#FF6B00;color:#fff;font-size:10px;padding:2px 7px;border-radius:3px;font-weight:600}
+.badge-claude2{background:#FFB347;color:#7A3800;font-size:10px;padding:2px 7px;border-radius:3px;font-weight:500}
 .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);display:none;align-items:flex-start;justify-content:center;z-index:100;padding:20px;overflow-y:auto}
 .modal-overlay.active{display:flex}
 .modal{background:white;border-radius:12px;max-width:760px;width:100%;padding:22px 24px;margin:auto}
@@ -153,7 +155,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo"
     <div class="buy-track-head">
       <div>
         <div class="buy-track-title">BUY 추적 — 추상 사후 검증</div>
-        <div class="buy-track-sub">진비 keep 종목의 시계열 가격 추이 · +10% 적중 / -10% 빗나감 / 30일 미만 미확정</div>
+        <div class="buy-track-sub">진비 keep 종목의 시계열 가격 추이 · +10% 적중 / -10% 빗나감 / 30일 미만 미확정 · Claude 추천 동시 검증</div>
       </div>
       <div class="toolbar">
         <button class="btn-secondary" onclick="refreshAllPrices()">시세 갱신</button>
@@ -240,6 +242,11 @@ let state=loadData();
 let currentStockIdx=-1;
 let saveTimer=null;
 
+const CLAUDE_PICKS_W1={
+  'RF머트리얼즈':'1순위',
+  '그린리소스':'동급2순위',
+  '지앤비에스 에코':'동급2순위'
+};
 function loadData(){
   if(window.__INIT_DATA__&&!localStorage.getItem(STORAGE_KEY))localStorage.setItem(STORAGE_KEY,JSON.stringify(window.__INIT_DATA__));
   const stored=localStorage.getItem(STORAGE_KEY);
@@ -286,6 +293,14 @@ function loadData(){
       });
     }
   }
+  data.weeks.forEach(function(w){
+    if(w.weekNumber===1){
+      var picks=CLAUDE_PICKS_W1;
+      w.stocks.forEach(function(s){
+        if(!s.claudePick&&picks[s.name])s.claudePick=picks[s.name];
+      });
+    }
+  });
   data.tracking.stocks.forEach(function(t){
     if(t.userPick==null)t.userPick=true;
     if(t.tutorPick==null)t.tutorPick=TUTOR_PICKS_W1.indexOf(t.code)>=0;
@@ -318,7 +333,7 @@ function renderStockCards(){
     card.innerHTML='<div class="stock-header"><span class="stock-name">'+esc(stock.name)+'</span><span class="stock-code">'+esc(stock.code)+'</span></div>'
       +'<div class="stock-stats"><span>3월 <strong>'+stock.march+'%</strong></span><span>4월 <strong>'+stock.april+'%</strong></span><span>차이 <strong>'+stock.diff+'</strong></span><span>표준편차 <strong>'+stock.stdev+'</strong></span></div>'
       +summary
-      +'<div class="stock-badges"><span class="badge '+getBadgeClass(d)+'">'+getDecLabel(d)+'</span>'+priority+'</div>';
+      +'<div class="stock-badges"><span class="badge '+getBadgeClass(d)+'">'+getDecLabel(d)+'</span>'+priority+(stock.claudePick?'<span class="badge '+(stock.claudePick==='1순위'?'badge-claude1':'badge-claude2')+'">Claude '+stock.claudePick+'</span>':'')+'</div>';
     grid.appendChild(card);
   });
 }
