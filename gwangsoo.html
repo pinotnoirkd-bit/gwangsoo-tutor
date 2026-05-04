@@ -50,8 +50,6 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo"
 .badge-empty{background:#F0EFE9;color:#888884}
 .badge-priority{background:#F0EFE9;color:#5A5A55}
 .badge-saved{background:#E1F5EE;color:#0F6E56;font-size:10px;padding:2px 7px;border-radius:3px;margin-left:8px}
-.badge-claude1{background:#FF6B00;color:#fff;font-size:10px;padding:2px 7px;border-radius:3px;font-weight:600}
-.badge-claude2{background:#FFB347;color:#7A3800;font-size:10px;padding:2px 7px;border-radius:3px;font-weight:500}
 .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);display:none;align-items:flex-start;justify-content:center;z-index:100;padding:20px;overflow-y:auto}
 .modal-overlay.active{display:flex}
 .modal{background:white;border-radius:12px;max-width:760px;width:100%;padding:22px 24px;margin:auto}
@@ -129,6 +127,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo"
 .judge-badge.miss{background:#FBEAF0;color:#993556}
 .judge-badge.pending{background:#F0EFE9;color:#888884}
 .tutor-badge{font-size:9px;padding:2px 6px;background:#F0EEFA;color:#534AB7;border-radius:3px;font-weight:500}
+.claude-badge{font-size:9px;padding:2px 6px;background:#FFF1E6;color:#B8541F;border-radius:3px;font-weight:500;border:0.5px solid #E8A87C}
+.claude-badge.rank1{background:#FCE5D5;color:#8C3A0A;border-color:#D88A4F}
 .ratio-badge{font-size:9px;padding:2px 6px;border-radius:3px;font-weight:500}
 .ratio-badge.good{background:#E1F5EE;color:#0F6E56}
 .ratio-badge.mid{background:#FAEEDA;color:#854F0B}
@@ -155,7 +155,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo"
     <div class="buy-track-head">
       <div>
         <div class="buy-track-title">BUY 추적 — 추상 사후 검증</div>
-        <div class="buy-track-sub">진비 keep 종목의 시계열 가격 추이 · +10% 적중 / -10% 빗나감 / 30일 미만 미확정 · Claude 추천 동시 검증</div>
+        <div class="buy-track-sub">진비 keep 종목 시계열 · +10% 적중 / -10% 빗나감 / 30일 미만 미확정 · Claude 추천 동시 검증</div>
       </div>
       <div class="toolbar">
         <button class="btn-secondary" onclick="refreshAllPrices()">시세 갱신</button>
@@ -237,16 +237,12 @@ const seedWeek1={weekNumber:1,date:'2026-05-04',phase:1,stocks:[
 function emptyAnswer(){return{company:'',causes:[{source:'',content:''}],abstraction:'',marketChange:false,companyChange:false,decision:null,decisionReason:''}}
 const SALES_GROWTH={'452280':30,'170920':12,'052860':58,'327260':44,'402490':452,'382800':30,'078600':16};
 const TUTOR_PICKS_W1=['402490','327260','382800'];
+const CLAUDE_PICKS_W1={'327260':'1순위','402490':'동급2순위','382800':'동급2순위'};
 function calcRatio(cum,sg){if(!sg||sg===0)return null;return cum/sg}
 let state=loadData();
 let currentStockIdx=-1;
 let saveTimer=null;
 
-const CLAUDE_PICKS_W1={
-  'RF머트리얼즈':'1순위',
-  '그린리소스':'동급2순위',
-  '지앤비에스 에코':'동급2순위'
-};
 function loadData(){
   if(window.__INIT_DATA__&&!localStorage.getItem(STORAGE_KEY))localStorage.setItem(STORAGE_KEY,JSON.stringify(window.__INIT_DATA__));
   const stored=localStorage.getItem(STORAGE_KEY);
@@ -287,23 +283,17 @@ function loadData(){
             ratio:s.fundamentalRatio||calcRatio((s.march||0)+(s.april||0),SALES_GROWTH[s.code]),
             abstraction:s.answer.abstraction||'',
             userPick:true,tutorPick:TUTOR_PICKS_W1.indexOf(s.code)>=0,
+            claudePick:CLAUDE_PICKS_W1[s.code]||null,
             pricePoints:[],lastFetch:null,fetchError:null
           });
         }
       });
     }
   }
-  data.weeks.forEach(function(w){
-    if(w.weekNumber===1){
-      var picks=CLAUDE_PICKS_W1;
-      w.stocks.forEach(function(s){
-        if(!s.claudePick&&picks[s.name])s.claudePick=picks[s.name];
-      });
-    }
-  });
   data.tracking.stocks.forEach(function(t){
     if(t.userPick==null)t.userPick=true;
     if(t.tutorPick==null)t.tutorPick=TUTOR_PICKS_W1.indexOf(t.code)>=0;
+    if(t.claudePick==null)t.claudePick=CLAUDE_PICKS_W1[t.code]||null;
     if(!t.pricePoints)t.pricePoints=[];
   });
   return data;
@@ -333,7 +323,7 @@ function renderStockCards(){
     card.innerHTML='<div class="stock-header"><span class="stock-name">'+esc(stock.name)+'</span><span class="stock-code">'+esc(stock.code)+'</span></div>'
       +'<div class="stock-stats"><span>3월 <strong>'+stock.march+'%</strong></span><span>4월 <strong>'+stock.april+'%</strong></span><span>차이 <strong>'+stock.diff+'</strong></span><span>표준편차 <strong>'+stock.stdev+'</strong></span></div>'
       +summary
-      +'<div class="stock-badges"><span class="badge '+getBadgeClass(d)+'">'+getDecLabel(d)+'</span>'+priority+(stock.claudePick?'<span class="badge '+(stock.claudePick==='1순위'?'badge-claude1':'badge-claude2')+'">Claude '+stock.claudePick+'</span>':'')+'</div>';
+      +'<div class="stock-badges"><span class="badge '+getBadgeClass(d)+'">'+getDecLabel(d)+'</span>'+priority+'</div>';
     grid.appendChild(card);
   });
 }
@@ -519,6 +509,7 @@ function rebuildTracking(){
         ratio:calcRatio((s.march||0)+(s.april||0),SALES_GROWTH[s.code]),
         abstraction:s.answer.abstraction||'',
         userPick:true,tutorPick:TUTOR_PICKS_W1.indexOf(s.code)>=0,
+        claudePick:CLAUDE_PICKS_W1[s.code]||null,
         pricePoints:[],lastFetch:null,fetchError:null
       });
     }
@@ -613,6 +604,7 @@ function renderTracking(){
       returnHtml='<div class="buy-card-return '+cls+'">'+sign+ret.toFixed(1)+'%</div>';
     }
     const tutorBadge=t.tutorPick?'<span class="tutor-badge">튜터도 BUY</span>':'';
+    const claudeBadge=t.claudePick?'<span class="claude-badge'+(t.claudePick==='1순위'?' rank1':'')+'">Claude '+esc(t.claudePick)+'</span>':'';
     const ratioB=ratioBadge(t.ratio);
     const meta=[];
     if(t.addedPrice)meta.push('진입 <strong>'+t.addedPrice.toLocaleString()+'</strong>');
@@ -625,7 +617,7 @@ function renderTracking(){
       +'<div class="buy-card-meta">'+meta.join(' · ')+'</div>'
       +(t.abstraction?'<div class="buy-card-abst">'+esc(t.abstraction)+'</div>':'')
       +errorMsg
-      +'<div class="buy-card-badges"><span class="judge-badge '+judge+'">'+judgeLabel(judge)+'</span>'+ratioB+tutorBadge+'</div>';
+      +'<div class="buy-card-badges"><span class="judge-badge '+judge+'">'+judgeLabel(judge)+'</span>'+ratioB+tutorBadge+claudeBadge+'</div>';
     grid.appendChild(card);
   });
   const addBtn=document.createElement('button');
