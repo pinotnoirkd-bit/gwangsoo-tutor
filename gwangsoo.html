@@ -140,6 +140,22 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","App
 .claude-solo-section .buy-card{box-shadow:inset 3px 0 0 var(--ink-3)}
 .buy-card.claude-solo .buy-card-row{padding-bottom:6px;border-bottom:1px solid var(--line);margin-bottom:8px}
 .empty-claude-solo{padding:24px;text-align:center;font-size:11px;color:var(--gray-2);font-style:italic;border:1px dashed var(--gray-3);letter-spacing:0.3px}
+.claude-picks-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--line)}
+.claude-picks-grid .claude-pick-card{background:var(--surface);border-right:1px solid var(--line);padding:20px 22px;position:relative}
+.claude-picks-grid .claude-pick-card:last-child{border-right:none}
+.claude-rank-tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;background:var(--ink);color:white;padding:4px 10px;margin-bottom:10px}
+.claude-rank-tag.r2,.claude-rank-tag.r3{background:var(--surface);color:var(--ink);border:1px solid var(--ink)}
+.claude-pick-name{font-size:16px;font-weight:700;color:var(--ink);letter-spacing:-0.3px;margin-bottom:2px}
+.claude-pick-code{font-size:10px;color:var(--gray-2);font-feature-settings:"tnum";letter-spacing:0.5px;margin-bottom:8px}
+.claude-pick-return{font-size:24px;font-weight:700;letter-spacing:-0.8px;font-feature-settings:"tnum";line-height:1;margin:6px 0}
+.claude-pick-return.pos{color:var(--up)}.claude-pick-return.neg{color:var(--down)}.claude-pick-return.flat{color:var(--gray-2)}
+.claude-pick-meta{display:flex;gap:14px;font-size:10px;color:var(--gray-1);margin-bottom:12px;flex-wrap:wrap;letter-spacing:0.2px;font-feature-settings:"tnum"}
+.claude-pick-meta strong{color:var(--ink);font-weight:700}
+.claude-pick-section{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.claude-pick-label{font-size:9px;font-weight:700;color:var(--gray-1);letter-spacing:0.6px;text-transform:uppercase;margin-bottom:6px}
+.claude-pick-reason{font-size:12px;color:var(--ink-2);line-height:1.5;margin-bottom:14px}
+.claude-pick-missed{font-size:12px;color:var(--ink-3);line-height:1.5;background:var(--surface-2);padding:10px 12px;border-left:2px solid var(--down)}
+.claude-pick-missed-label{font-size:9px;font-weight:700;color:var(--down);letter-spacing:0.6px;text-transform:uppercase;margin-bottom:4px}
 .view-badge{display:inline-block;font-size:9px;padding:4px 9px;background:var(--ink);color:white;border-radius:0;margin-left:12px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;vertical-align:middle}
 body.view-mode .toolbar,
 body.view-mode .add-track-btn,
@@ -172,6 +188,9 @@ body.view-mode .form-section label::after{content:" (읽기 전용)";font-size:1
   .compare-table .label-col{width:60px}
   .buy-cards{grid-template-columns:1fr}
   .buy-card{border-right:none}
+  .claude-picks-grid{grid-template-columns:1fr}
+  .claude-picks-grid .claude-pick-card{border-right:none;border-bottom:1px solid var(--line)}
+  .claude-picks-grid .claude-pick-card:last-child{border-bottom:none}
   .buy-card-return{font-size:24px}
   .stat-value{font-size:26px}
   .modal{padding:20px}
@@ -208,14 +227,11 @@ body.view-mode .form-section label::after{content:" (읽기 전용)";font-size:1
   <div class="buy-tracking claude-solo-section">
     <div class="buy-track-head">
       <div>
-        <div class="buy-track-title">BUY 추적 — Claude 단독 픽 (진비와 다름)</div>
-        <div class="buy-track-sub">진비가 hold/skip 결정한 종목 중 Claude만 추천한 것 · 동일 +10%/-10% 판정</div>
-      </div>
-      <div class="toolbar">
-        <button class="btn-secondary" onclick="openAddClaudeSoloModal()">+ Claude 단독 픽 추가</button>
+        <div class="buy-track-title">Claude 픽 — 1주차 종합 우선순위</div>
+        <div class="buy-track-sub">Claude가 선정한 1·2·3 순위. 각 카드에 픽 사유 + 진비 답안에서 놓친 점 표시. 동일 +10%/-10% 판정.</div>
       </div>
     </div>
-    <div class="buy-cards" id="claude-solo-cards"></div>
+    <div class="claude-picks-grid" id="claude-solo-cards"></div>
   </div>
   <div class="progress-section">
     <div class="progress-top">
@@ -290,7 +306,12 @@ const seedWeek1={weekNumber:1,date:'2026-05-04',phase:1,stocks:[
 function emptyAnswer(){return{company:'',causes:[{source:'',content:''}],abstraction:'',marketChange:false,companyChange:false,decision:null,decisionReason:''}}
 const SALES_GROWTH={'452280':30,'170920':12,'052860':58,'327260':44,'402490':452,'382800':30,'078600':16};
 const TUTOR_PICKS_W1=['402490','327260','382800'];
-const CLAUDE_PICKS_W1={'327260':'1순위','402490':'동급2순위','382800':'동급2순위'};
+const CLAUDE_PICKS_W1={
+  '327260':{name:'RF머트리얼즈',rank:'1순위',salesGrowth:44,reason:'4Q 사상 최대 영업이익 27억(+553% YoY). AI 광통신 + K-방산 두 가지 모멘텀 동시 작동. 2026 매출 710억 컨센서스.',missed:'진비 답안은 방산만 짚고 4Q 영업이익 +553% 폭증 데이터를 누락. 광수 메소드 = 데이터 우선이라 이 숫자가 추상화 핵심이어야 함. "사상 최대 분기 이익"은 박시동 룰 "신분이 바뀐 종목"에 정확히 부합.'},
+  '382800':{name:'지앤비에스 에코',rank:'2순위',salesGrowth:30,reason:'1Q 매출 417.5억 = 25년 연간 919억의 45%를 한 분기에 달성. 분기 환산 +81% YoY 어닝 서프라이즈. 친환경 공정 트렌드 베이스.',missed:'진비 답안에 1Q 데이터는 있지만 핵심 시간 차를 안 짚음 — 광수 ratio 3.53은 1Q 반영 전 숫자. 2Q 반영되면 ratio 떨어짐 = 더 매력적으로 변환. 즉 현재 ratio가 표면값이지 실제 저평가.'},
+  '402490':{name:'그린리소스',rank:'3순위',salesGrowth:452,reason:'반도체 코팅 (3·5nm 식각 장비 국내 유일 기술) + 바이오 안정. ratio 0.22 가장 낮음 = 가장 안전. 두 다리 보유.',missed:'진비 답안은 "반도체 미세화 → 희귀금속 수요" 단일 추상화. 그러나 매출 75%가 바이오매스 사업, +452% 매출 폭증의 견인차도 바이오. 한 다리만 짚음. 광수 메소드의 "추상화는 결정적 외부 변수 한 줄"인데 이 종목은 두 다리라 한 줄로 안 잡힘 → 추상화 자체가 어려운 종목임을 인지해야.'}
+};
+const CLAUDE_PICK_RANK={};Object.keys(CLAUDE_PICKS_W1).forEach(function(c){CLAUDE_PICK_RANK[c]=CLAUDE_PICKS_W1[c].rank});
 function calcRatio(cum,sg){if(!sg||sg===0)return null;return cum/sg}
 let state=loadData();
 let currentStockIdx=-1;
@@ -336,7 +357,7 @@ function loadData(){
             ratio:s.fundamentalRatio||calcRatio((s.march||0)+(s.april||0),SALES_GROWTH[s.code]),
             abstraction:s.answer.abstraction||'',
             userPick:true,tutorPick:TUTOR_PICKS_W1.indexOf(s.code)>=0,
-            claudePick:CLAUDE_PICKS_W1[s.code]||null,
+            claudePick:CLAUDE_PICK_RANK[s.code]||null,
             pricePoints:[],lastFetch:null,fetchError:null
           });
         }
@@ -346,7 +367,7 @@ function loadData(){
   data.tracking.stocks.forEach(function(t){
     if(t.userPick==null)t.userPick=true;
     if(t.tutorPick==null)t.tutorPick=TUTOR_PICKS_W1.indexOf(t.code)>=0;
-    if(t.claudePick==null)t.claudePick=CLAUDE_PICKS_W1[t.code]||null;
+    if(t.claudePick==null)t.claudePick=CLAUDE_PICK_RANK[t.code]||null;
     if(!t.pricePoints)t.pricePoints=[];
   });
   return data;
@@ -562,7 +583,7 @@ function rebuildTracking(){
         ratio:calcRatio((s.march||0)+(s.april||0),SALES_GROWTH[s.code]),
         abstraction:s.answer.abstraction||'',
         userPick:true,tutorPick:TUTOR_PICKS_W1.indexOf(s.code)>=0,
-        claudePick:CLAUDE_PICKS_W1[s.code]||null,
+        claudePick:CLAUDE_PICK_RANK[s.code]||null,
         pricePoints:[],lastFetch:null,fetchError:null
       });
     }
@@ -672,27 +693,57 @@ function buildTrackCard(t,idx,isSolo){
 }
 function renderTracking(){
   const grid=document.getElementById('buy-cards');
-  const soloGrid=document.getElementById('claude-solo-cards');
+  const cgrid=document.getElementById('claude-solo-cards');
   if(!grid)return;
-  grid.innerHTML='';if(soloGrid)soloGrid.innerHTML='';
+  grid.innerHTML='';
   const tracks=state.tracking&&state.tracking.stocks||[];
   tracks.forEach(function(t,idx){
-    if(t.claudeOnly){
-      if(soloGrid)soloGrid.appendChild(buildTrackCard(t,idx,true));
-    }else{
-      grid.appendChild(buildTrackCard(t,idx,false));
-    }
+    if(!t.claudeOnly)grid.appendChild(buildTrackCard(t,idx,false));
   });
   const addBtn=document.createElement('button');
   addBtn.className='add-track-btn';addBtn.onclick=openAddTrackingModal;addBtn.textContent='+ 종목 추가';
   grid.appendChild(addBtn);
-  if(soloGrid&&!tracks.some(function(t){return t.claudeOnly})){
-    const empty=document.createElement('div');
-    empty.className='empty-claude-solo';
-    empty.textContent='1회차 — Claude 픽이 진비와 모두 일치 (단독 픽 없음)';
-    soloGrid.appendChild(empty);
-  }
+  if(cgrid)renderClaudePicks(cgrid);
   setTimeout(drawMiniCharts,50);
+}
+function renderClaudePicks(cgrid){
+  cgrid.innerHTML='';
+  const ranked=Object.keys(CLAUDE_PICKS_W1).sort(function(a,b){
+    const ra=CLAUDE_PICKS_W1[a].rank,rb=CLAUDE_PICKS_W1[b].rank;
+    const oa=ra==='1순위'?1:ra==='2순위'?2:3,ob=rb==='1순위'?1:rb==='2순위'?2:3;
+    return oa-ob;
+  });
+  ranked.forEach(function(code){
+    const pick=CLAUDE_PICKS_W1[code];
+    const t=(state.tracking&&state.tracking.stocks||[]).find(function(s){return s.code===code});
+    const card=document.createElement('div');
+    card.className='claude-pick-card';
+    const rankClass=pick.rank==='1순위'?'r1':pick.rank==='2순위'?'r2':'r3';
+    let returnHtml='<div class="claude-pick-return flat">시세 조회 중…</div>';
+    let metaHtml='';
+    if(t){
+      const last=t.pricePoints&&t.pricePoints.length>0?t.pricePoints[t.pricePoints.length-1]:null;
+      if(t.addedPrice&&last&&last.close){
+        const ret=(last.close-t.addedPrice)/t.addedPrice*100;
+        const cls=ret>0?'pos':ret<0?'neg':'flat';
+        const sign=ret>0?'+':'';
+        returnHtml='<div class="claude-pick-return '+cls+'">'+sign+ret.toFixed(1)+'%</div>';
+      }
+      const meta=[];
+      if(t.addedPrice)meta.push('진입 <strong>'+t.addedPrice.toLocaleString()+'</strong>');
+      if(last&&last.close)meta.push('현재 <strong>'+last.close.toLocaleString()+'</strong>');
+      if(pick.salesGrowth!=null)meta.push('매출 <strong>+'+pick.salesGrowth+'%</strong>');
+      metaHtml='<div class="claude-pick-meta">'+meta.join(' · ')+'</div>';
+    }
+    card.innerHTML='<div class="claude-rank-tag '+rankClass+'">Claude '+esc(pick.rank)+'</div>'
+      +'<div class="claude-pick-name">'+esc(pick.name)+'</div>'
+      +'<div class="claude-pick-code">'+esc(code)+'</div>'
+      +returnHtml
+      +metaHtml
+      +'<div class="claude-pick-section"><div class="claude-pick-label">픽 사유</div><div class="claude-pick-reason">'+esc(pick.reason)+'</div></div>'
+      +'<div class="claude-pick-missed"><div class="claude-pick-missed-label">진비가 놓친 점</div>'+esc(pick.missed)+'</div>';
+    cgrid.appendChild(card);
+  });
 }
 
 function drawMiniCharts(){
